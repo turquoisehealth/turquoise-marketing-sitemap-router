@@ -2,6 +2,12 @@ const sitemapUrl = "https://marketing.turquoise.health/sitemap.xml";
 
 class UrlRewriter {
 	buffer: string;
+	newHost: string;
+
+	constructor(newHost: string) {
+		this.newHost = newHost;
+		this.buffer = '';
+	}
 
 	element(element: Element) {
 		this.buffer = '';
@@ -11,7 +17,7 @@ class UrlRewriter {
 
 		if (text.lastInTextNode) {
 			// We're done with this text node -- search and replace and reset.
-			text.replace(this.buffer.replace("marketing.turquoise.health", "turquoise.health"))
+			text.replace(this.buffer.replace("marketing.turquoise.health", this.newHost))
 		} else {
 			// This wasn't the last text chunk, and we don't know if this chunk
 			// will participate in a match. We must remove it so the client
@@ -23,6 +29,7 @@ class UrlRewriter {
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+		const url = URL.parse(request.url);
 		// existing request is immutable, clone it to change the URL and headers
 		const newRequest = new Request(sitemapUrl, request);
 		newRequest.headers.set("cf-access-client-id", env.CF_ACCESS_CLIENT_ID);
@@ -30,7 +37,7 @@ export default {
 
 		try {
 			const response = await fetch(newRequest);
-			const rewriter = new HTMLRewriter().on("loc", new UrlRewriter())
+			const rewriter = new HTMLRewriter().on("loc", new UrlRewriter(url?.host || "turquoise.health"))
 			return rewriter.transform(response)
 		} catch (e) {
 			return new Response(JSON.stringify({ error: e.message }), {
