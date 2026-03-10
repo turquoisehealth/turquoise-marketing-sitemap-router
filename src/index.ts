@@ -30,6 +30,7 @@ class UrlRewriter {
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = URL.parse(request.url);
+		console.log(`Incoming request: ${request.url}`, url, url?.host);
 		// existing request is immutable, clone it to change the URL and headers
 		const newRequest = new Request(sitemapUrl, request);
 		newRequest.headers.set("cf-access-client-id", env.CF_ACCESS_CLIENT_ID);
